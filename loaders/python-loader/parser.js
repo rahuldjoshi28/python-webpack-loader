@@ -16,6 +16,9 @@ const parseRow = (row) => {
     if (/def/.test(row)) {
         return result.replace(/def/, 'function');
     }
+    if (/if/.test(row)) {
+        return result.replace(/if/, 'if(').replace('{', ') {');
+    }
     return result;
 };
 
