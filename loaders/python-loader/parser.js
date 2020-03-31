@@ -11,6 +11,14 @@ const getIndentCount = (line, indentLength) => {
     return count / indentLength;
 };
 
+const parseRow = (row) => {
+    const result = row.replace(':', ' {');
+    if (/def/.test(row)) {
+        return result.replace(/def/, 'function');
+    }
+    return result;
+};
+
 const parse = (jsSource) => {
     let source = jsSource.toString();
     const indentLength = 4;
@@ -38,7 +46,7 @@ const parse = (jsSource) => {
             blocks.push(row);
         }
         if (numberOfIndents === currentIndent + 1) {
-            blocks[count - 1] = blocks[count - 1].replace(':', ' {');
+            blocks[count - 1] = parseRow(blocks[count - 1]);
             blocks.push(row);
             currentIndent++;
         }
