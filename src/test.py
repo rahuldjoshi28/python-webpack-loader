@@ -1,5 +1,5 @@
-def someRandomFunction():
-    print("Hello python world!!")
+def someRandomFunction(name):
+    print("Hello python world!!", name)
     print("Hello python world 2!!")
     print("Hello python world 3!!")
     if i < 10:
