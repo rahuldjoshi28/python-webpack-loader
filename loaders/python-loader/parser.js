@@ -14,8 +14,17 @@ const getIndentCount = (line, indentLength) => {
     return count / indentLength;
 };
 
-const parseRow = (row, currentDirectory) => {
+const parseStatement = (currentDirectory, variables) => row => {
     const result = row.replace(':', ' {');
+    if (/=/.test(row)) {
+        const [variable, assignmentExpression] = row.split('=').map(v => v.trim());
+        const isNew = !variables[variable];
+        if (isNew) {
+            //TODO: Wont work if right side of expression contain some python specific operation eg 2 * [3, 2]
+            variables[variable] = assignmentExpression;
+        }
+        return `${isNew ? 'var' : ''} ${variable} = ${variables[variable]}`
+    }
     if (/import/.test(row)) {
         const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${row.split(' ')[1]}.py`));
         return parse(moduleSource);
@@ -45,6 +54,9 @@ const parse = (jsSource, currentDirectory) => {
     });
     let count = 0;
 
+    const variables = [];
+    const createRow = parseStatement(currentDirectory, variables);
+
     rows.forEach((row, i) => {
         const numberOfIndents = getIndentCount(row, indentLength);
         if (numberOfIndents === currentIndent - 1) {
@@ -53,10 +65,10 @@ const parse = (jsSource, currentDirectory) => {
             currentIndent--;
         }
         if (numberOfIndents === currentIndent) {
-            blocks.push(parseRow(row, currentDirectory));
+            blocks.push(createRow(row));
         }
         if (numberOfIndents === currentIndent + 1) {
-            blocks[count - 1] = parseRow(blocks[count - 1], currentDirectory);
+            blocks[count - 1] = createRow(blocks[count - 1]);
             blocks.push(row);
             currentIndent++;
         }
