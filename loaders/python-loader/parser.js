@@ -38,13 +38,16 @@ const parseStatement = (currentDirectory, variables) => row => {
     return result;
 };
 
+const isGlobal = (row, indents) => indents === 0 && !/^def/.test(row);
+
+const toCodeString = codeArray => codeArray.join("\n").toString();
+
 const parse = (jsSource, currentDirectory) => {
     let source = jsSource.toString();
     const indentLength = 4;
 
     let currentIndent = 0;
 
-    const blocks = [];
     const rows = source.split('\n').map(row => {
         let result = row;
         nativeFunctionMappings.forEach(rule => {
@@ -57,19 +60,44 @@ const parse = (jsSource, currentDirectory) => {
     const variables = [];
     const createRow = parseStatement(currentDirectory, variables);
 
+    let globalMode = true;
+    const globalCode = [];
+    let blocks = [];
+
+    const exportedFunctions = {};
+    let currentFunction;
+
     rows.forEach((row, i) => {
         const numberOfIndents = getIndentCount(row, indentLength);
-        if (numberOfIndents === currentIndent - 1) {
+        const parsedRow = createRow(row);
+        if (numberOfIndents < currentIndent) {
             blocks.push(`${String(' ').repeat(numberOfIndents * indentLength)}}\n`);
             count++;
             currentIndent--;
+            if (isGlobal(row, numberOfIndents) && !globalMode) {
+                exportedFunctions[currentFunction] = toCodeString(blocks);
+                blocks = [];
+                globalMode = true;
+            }
         }
         if (numberOfIndents === currentIndent) {
-            blocks.push(createRow(row));
+            if (/def/.test(row)) {
+                globalMode = false;
+                currentFunction = row.substring(4, row.indexOf('(')).trim();
+            }
+            if (globalMode) {
+                globalCode.push(parsedRow)
+            } else {
+                blocks.push(parsedRow);
+            }
         }
         if (numberOfIndents === currentIndent + 1) {
             blocks[count - 1] = createRow(blocks[count - 1]);
-            blocks.push(row);
+            if (globalMode) {
+                globalCode.push(parsedRow)
+            } else {
+                blocks.push(parsedRow);
+            }
             currentIndent++;
         }
         count++;
@@ -78,8 +106,10 @@ const parse = (jsSource, currentDirectory) => {
         blocks.push(`${String(' ').repeat((currentIndent - 1) * indentLength)}}\n`);
         currentIndent--;
     }
+    //TODO: This is assuming last line will always be part of function not global
+    exportedFunctions[currentFunction] = exportedFunctions[currentFunction] + toCodeString(blocks)
 
-    return blocks.join("\n").toString();
+    return [toCodeString(globalCode), exportedFunctions];
 };
 
 module.exports = parse;
