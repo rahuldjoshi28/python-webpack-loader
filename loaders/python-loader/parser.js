@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require("path");
+
 const nativeFunctionMappings = [
     {
         expression: /print/g,
@@ -11,8 +14,12 @@ const getIndentCount = (line, indentLength) => {
     return count / indentLength;
 };
 
-const parseRow = (row) => {
+const parseRow = (row, currentDirectory) => {
     const result = row.replace(':', ' {');
+    if (/import/.test(row)) {
+        const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${row.split(' ')[1]}.py`));
+        return parse(moduleSource);
+    }
     if (/def/.test(row)) {
         return result.replace(/def/, 'function');
     }
@@ -22,7 +29,7 @@ const parseRow = (row) => {
     return result;
 };
 
-const parse = (jsSource) => {
+const parse = (jsSource, currentDirectory) => {
     let source = jsSource.toString();
     const indentLength = 4;
 
@@ -46,10 +53,10 @@ const parse = (jsSource) => {
             currentIndent--;
         }
         if (numberOfIndents === currentIndent) {
-            blocks.push(row);
+            blocks.push(parseRow(row, currentDirectory));
         }
         if (numberOfIndents === currentIndent + 1) {
-            blocks[count - 1] = parseRow(blocks[count - 1]);
+            blocks[count - 1] = parseRow(blocks[count - 1], currentDirectory);
             blocks.push(row);
             currentIndent++;
         }
@@ -60,9 +67,7 @@ const parse = (jsSource) => {
         currentIndent--;
     }
 
-    const ans = blocks.join("\n").toString();
-    console.log(ans);
-    return ans;
+    return blocks.join("\n").toString();
 };
 
 module.exports = parse;

@@ -1,5 +1,5 @@
 import React from 'react';
-import test from './test.py';
+import test from './python/test.py';
 
 console.log('printing test: ', test("Rahul"));
 

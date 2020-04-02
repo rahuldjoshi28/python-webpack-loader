@@ -1,7 +1,9 @@
 const parse = require("./parser");
 
-module.exports = function pythonLoader(source) {
+module.exports = function pythonLoader(source, ...rest) {
+    const directoryPath = this.context;
     let sourceCopy = source.toString();
-    const result = parse(sourceCopy);
+    const result = parse(sourceCopy, directoryPath);
+    console.log(result);
     return `module.exports = (args) => { (${result})(args) }`;
 };
