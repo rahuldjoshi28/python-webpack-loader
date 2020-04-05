@@ -17,6 +17,7 @@ const getIndentCount = (line, indentLength) => {
 };
 
 const parseStatement = (currentDirectory, variables) => row => {
+    if (!row) return "";
     const result = row.replace(':', ' {');
     if (/=/.test(row)) {
         const [variable, assignmentExpression] = row.split('=').map(v => v.trim());
@@ -25,7 +26,7 @@ const parseStatement = (currentDirectory, variables) => row => {
             //TODO: Wont work if right side of expression contain some python specific operation eg 2 * [3, 2]
             variables[variable] = assignmentExpression;
         }
-        return `${isNew ? 'var' : ''} ${variable} = ${variables[variable]}`
+        return `${isNew ? 'var' : ''} ${variable} = ${assignmentExpression}`
     }
     if (/import/.test(row)) {
         const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${row.split(' ')[1]}.py`));
@@ -76,8 +77,7 @@ const parse = (jsSource, currentDirectory) => {
                 let endingBracket = `${String(' ').repeat(numberOfIndents * INDENT_LENGTH)}}\n`;
                 if (globalMode) {
                     globalCode.push(endingBracket);
-                }
-                else {
+                } else {
                     blocks.push(endingBracket);
                     count++;
                 }
