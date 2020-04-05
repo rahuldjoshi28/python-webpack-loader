@@ -30,7 +30,12 @@ const parseStatement = (currentDirectory, variables) => row => {
     }
     if (/import/.test(row)) {
         const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${row.split(' ')[1]}.py`));
-        return parse(moduleSource);
+        const [globalCode, functions] = parse(moduleSource);
+        let resultCode = '' + globalCode;
+        Object.values(functions).forEach(fn => {
+            resultCode += '\n' + fn
+        });
+        return resultCode;
     }
     if (/def/.test(row)) {
         return result.replace(/def/, 'function');

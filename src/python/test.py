@@ -1,3 +1,5 @@
+import test2
+
 a = 4
 a = 3 + 2
 if(a > 3):
