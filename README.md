@@ -19,3 +19,8 @@ It let you write `python` code in your `javascript` project.
 
 Now you are ready to use this plugin
 You can see simple example of how to use *python-webpack-loader* in `example` folder 
+
+## Some features yet to be implemented:
+1. `Scope`: Variables which are declared in python files are not scoped
+2. `inbuilt modules`: Use of inbuild python modules is yet to be integrated in this loader.
+3. `class`: Feature of using class yet to be integrated with this loader 
