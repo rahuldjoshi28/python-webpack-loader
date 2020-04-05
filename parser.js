@@ -16,6 +16,8 @@ const getIndentCount = (line, indentLength) => {
     return count / indentLength;
 };
 
+const exportFunction = functions => `{ ${functions.map(fn => fn).join(',')} }`;
+
 const parseStatement = (currentDirectory, variables) => row => {
     if (!row) return "";
     const result = row.replace(':', ' {');
@@ -29,13 +31,12 @@ const parseStatement = (currentDirectory, variables) => row => {
         return `${isNew ? 'var' : ''} ${variable} = ${assignmentExpression}`
     }
     if (/import/.test(row)) {
-        const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${row.split(' ')[1]}.py`));
+        const moduleName = row.split(' ')[1];
+
+        const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${moduleName}.py`));
         const [globalCode, functions] = parse(moduleSource);
-        // let resultCode = '' + globalCode;
-        // Object.values(functions).forEach(fn => {
-        //     resultCode += '\n' + fn
-        // });
-        return globalCode;
+
+        return `${globalCode} \n const ${moduleName} = ${functions}`;
     }
     if (/def/.test(row)) {
         return result.replace(/def/, 'const')
@@ -62,12 +63,10 @@ const parse = (jsSource, currentDirectory) => {
     });
 
     const variables = [];
-    const globalCode = [];
-    const exportedFunctions = {};
+    const code = [];
 
     const createRow = parseStatement(currentDirectory, variables);
 
-    let count = 0;
     let currentFunction;
     let currentIndent = 0;
     const functions = [];
@@ -79,8 +78,7 @@ const parse = (jsSource, currentDirectory) => {
         if (numberOfIndents < currentIndent) {
             while (numberOfIndents !== currentIndent) {
                 let endingBracket = `${String(' ').repeat(numberOfIndents * INDENT_LENGTH)}}\n`;
-                globalCode.push(endingBracket);
-                count++;
+                code.push(endingBracket);
                 currentIndent--;
             }
         }
@@ -89,22 +87,20 @@ const parse = (jsSource, currentDirectory) => {
                 currentFunction = row.substring(4, row.indexOf('(')).trim();
                 functions.push(currentFunction);
             }
-            globalCode.push(parsedRow);
-            count++;
+            code.push(parsedRow);
         }
         if (numberOfIndents === currentIndent + 1) {
-            globalCode.push(parsedRow);
-            count++;
+            code.push(parsedRow);
             currentIndent++;
         }
     });
 
     while (currentIndent > 0) {
-        globalCode.push(`${String(' ').repeat((currentIndent) * INDENT_LENGTH)}}\n`);
+        code.push(`${String(' ').repeat((currentIndent) * INDENT_LENGTH)}}\n`);
         currentIndent--;
     }
 
-    return [toCodeString(globalCode), functions];
+    return [toCodeString(code), exportFunction(functions)];
 };
 
 module.exports = parse;
