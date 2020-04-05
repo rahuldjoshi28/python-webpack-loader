@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require("path");
 
+const INDENT_LENGTH = 4;
+
 const nativeFunctionMappings = [
     {
         expression: /print/g,
@@ -44,9 +46,6 @@ const toCodeString = codeArray => codeArray.join("\n").toString();
 
 const parse = (jsSource, currentDirectory) => {
     let source = jsSource.toString();
-    const indentLength = 4;
-
-    let currentIndent = 0;
 
     const rows = source.split('\n').map(row => {
         let result = row;
@@ -55,40 +54,57 @@ const parse = (jsSource, currentDirectory) => {
         });
         return result;
     });
-    let count = 0;
 
     const variables = [];
+    const globalCode = [];
+    const exportedFunctions = {};
+
     const createRow = parseStatement(currentDirectory, variables);
 
     let globalMode = true;
-    const globalCode = [];
     let blocks = [];
-
-    const exportedFunctions = {};
+    let count = 0;
     let currentFunction;
+    let currentIndent = 0;
 
     rows.forEach((row, i) => {
-        const numberOfIndents = getIndentCount(row, indentLength);
+        const numberOfIndents = getIndentCount(row, INDENT_LENGTH);
         const parsedRow = createRow(row);
+
         if (numberOfIndents < currentIndent) {
-            blocks.push(`${String(' ').repeat(numberOfIndents * indentLength)}}\n`);
-            count++;
-            currentIndent--;
+            while (numberOfIndents !== currentIndent) {
+                let endingBracket = `${String(' ').repeat(numberOfIndents * INDENT_LENGTH)}}\n`;
+                if (globalMode) {
+                    globalCode.push(endingBracket);
+                }
+                else {
+                    blocks.push(endingBracket);
+                    count++;
+                }
+
+                currentIndent--;
+            }
             if (isGlobal(row, numberOfIndents) && !globalMode) {
                 exportedFunctions[currentFunction] = toCodeString(blocks);
                 blocks = [];
                 globalMode = true;
+                count = 0;
+                currentFunction = undefined;
             }
         }
         if (numberOfIndents === currentIndent) {
             if (/def/.test(row)) {
                 globalMode = false;
                 currentFunction = row.substring(4, row.indexOf('(')).trim();
+                blocks.push(row);
+                count = 1;
+                return;
             }
             if (globalMode) {
                 globalCode.push(parsedRow)
             } else {
                 blocks.push(parsedRow);
+                count++;
             }
         }
         if (numberOfIndents === currentIndent + 1) {
@@ -97,17 +113,22 @@ const parse = (jsSource, currentDirectory) => {
                 globalCode.push(parsedRow)
             } else {
                 blocks.push(parsedRow);
+                count++;
             }
             currentIndent++;
         }
-        count++;
     });
+
     while (currentIndent > 0) {
-        blocks.push(`${String(' ').repeat((currentIndent - 1) * indentLength)}}\n`);
+        blocks.push(`${String(' ').repeat((currentIndent) * INDENT_LENGTH)}}\n`);
         currentIndent--;
     }
-    //TODO: This is assuming last line will always be part of function not global
-    exportedFunctions[currentFunction] = exportedFunctions[currentFunction] + toCodeString(blocks)
+
+    if (currentFunction) {
+        exportedFunctions[currentFunction] = exportedFunctions[currentFunction] || '' + toCodeString(blocks);
+    } else {
+        globalCode.push(...blocks)
+    }
 
     return [toCodeString(globalCode), exportedFunctions];
 };

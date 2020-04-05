@@ -8,10 +8,9 @@ module.exports = function pythonLoader(source) {
         ${Object.keys(functions).map(fn => `${fn}: ${functions[fn]}`).join(',\n').toString()}
     }`;
 
-    const result = `module.exports = (function() {
+    return `module.exports = (function() {
         ${globalCode}
         return ${functionString}
     })()
     `;
-    return result;
 };
