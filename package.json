@@ -1,8 +1,17 @@
 {
   "name": "python-loader",
   "version": "1.0.0",
+  "author": "Rahul Joshi",
   "description": "Webpack loader which converts python files into js so that you can use python files in js project ",
   "main": "loader.js",
-  "scripts": {
-  }
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "webpack",
+    "python",
+    "loader",
+    "python-loader"
+  ],
+  "license": "ISC"
 }
