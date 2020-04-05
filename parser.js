@@ -46,6 +46,9 @@ const parseStatement = (currentDirectory, variables) => row => {
     if (/if/.test(row)) {
         return result.replace(/if/, 'if(').replace('{', ') {');
     }
+    if (/for/.test(row)) {
+        return result.replace('for', 'for( let ').replace('{', '){');
+    }
     return result;
 };
 
