@@ -1,5 +1,5 @@
 {
-  "name": "python-loader",
+  "name": "python-webpack-loader",
   "version": "1.0.0",
   "author": "Rahul Joshi",
   "description": "Webpack loader which converts python files into js so that you can use python files in js project ",
@@ -13,5 +13,9 @@
     "loader",
     "python-loader"
   ],
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rahuldjoshi28/python-loader"
+  }
 }
