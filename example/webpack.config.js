@@ -24,7 +24,7 @@ module.exports = {
             {
                 test: /\.py$/,
                 use: [
-                    {loader: path.resolve(__dirname, 'loaders/python-loader/loader.js')}
+                    {loader: path.resolve(__dirname, '../loader.js')}
                 ]
             }
         ]
