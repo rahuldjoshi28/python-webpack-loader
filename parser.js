@@ -31,22 +31,22 @@ const parseStatement = (currentDirectory, variables) => row => {
     if (/import/.test(row)) {
         const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${row.split(' ')[1]}.py`));
         const [globalCode, functions] = parse(moduleSource);
-        let resultCode = '' + globalCode;
-        Object.values(functions).forEach(fn => {
-            resultCode += '\n' + fn
-        });
-        return resultCode;
+        // let resultCode = '' + globalCode;
+        // Object.values(functions).forEach(fn => {
+        //     resultCode += '\n' + fn
+        // });
+        return globalCode;
     }
     if (/def/.test(row)) {
-        return result.replace(/def/, 'function');
+        return result.replace(/def/, 'const')
+            .replace(")", ') =>')
+            .replace("(", ' = (');
     }
     if (/if/.test(row)) {
         return result.replace(/if/, 'if(').replace('{', ') {');
     }
     return result;
 };
-
-const isGlobal = (row, indents) => indents === 0 && !/^def/.test(row);
 
 const toCodeString = codeArray => codeArray.join("\n").toString();
 
@@ -67,11 +67,10 @@ const parse = (jsSource, currentDirectory) => {
 
     const createRow = parseStatement(currentDirectory, variables);
 
-    let globalMode = true;
-    let blocks = [];
     let count = 0;
     let currentFunction;
     let currentIndent = 0;
+    const functions = [];
 
     rows.forEach((row, i) => {
         const numberOfIndents = getIndentCount(row, INDENT_LENGTH);
@@ -80,62 +79,32 @@ const parse = (jsSource, currentDirectory) => {
         if (numberOfIndents < currentIndent) {
             while (numberOfIndents !== currentIndent) {
                 let endingBracket = `${String(' ').repeat(numberOfIndents * INDENT_LENGTH)}}\n`;
-                if (globalMode) {
-                    globalCode.push(endingBracket);
-                } else {
-                    blocks.push(endingBracket);
-                    count++;
-                }
-
+                globalCode.push(endingBracket);
+                count++;
                 currentIndent--;
-            }
-            if (isGlobal(row, numberOfIndents) && !globalMode) {
-                exportedFunctions[currentFunction] = toCodeString(blocks);
-                blocks = [];
-                globalMode = true;
-                count = 0;
-                currentFunction = undefined;
             }
         }
         if (numberOfIndents === currentIndent) {
             if (/def/.test(row)) {
-                globalMode = false;
                 currentFunction = row.substring(4, row.indexOf('(')).trim();
-                blocks.push(row);
-                count = 1;
-                return;
+                functions.push(currentFunction);
             }
-            if (globalMode) {
-                globalCode.push(parsedRow)
-            } else {
-                blocks.push(parsedRow);
-                count++;
-            }
+            globalCode.push(parsedRow);
+            count++;
         }
         if (numberOfIndents === currentIndent + 1) {
-            blocks[count - 1] = createRow(blocks[count - 1]);
-            if (globalMode) {
-                globalCode.push(parsedRow)
-            } else {
-                blocks.push(parsedRow);
-                count++;
-            }
+            globalCode.push(parsedRow);
+            count++;
             currentIndent++;
         }
     });
 
     while (currentIndent > 0) {
-        blocks.push(`${String(' ').repeat((currentIndent) * INDENT_LENGTH)}}\n`);
+        globalCode.push(`${String(' ').repeat((currentIndent) * INDENT_LENGTH)}}\n`);
         currentIndent--;
     }
 
-    if (currentFunction) {
-        exportedFunctions[currentFunction] = exportedFunctions[currentFunction] || '' + toCodeString(blocks);
-    } else {
-        globalCode.push(...blocks)
-    }
-
-    return [toCodeString(globalCode), exportedFunctions];
+    return [toCodeString(globalCode), functions];
 };
 
 module.exports = parse;
