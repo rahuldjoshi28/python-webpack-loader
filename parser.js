@@ -136,6 +136,16 @@ function extractBlock(rows, i, baseIndent) {
     return [newBlock, i];
 }
 
+const parseClassInstantiation = (code, classes) => {
+    return code.map(line => {
+        let parsedLine = line;
+        classes.forEach(className => {
+            parsedLine = parsedLine.replace(`${className}(`, `new ${className}(`);
+        });
+        return parsedLine;
+    });
+};
+
 const parse = (jsSource, currentDirectory) => {
     let source = jsSource.toString();
 
@@ -147,29 +157,38 @@ const parse = (jsSource, currentDirectory) => {
         return result;
     });
 
-    const exportedBlocks = [];
+    const functions = [];
+    const classes = [];
     const parsedBlocks = [];
     const globalCode = [];
 
     let i = 0;
     while (i < rows.length) {
         const statementType = /def/.test(rows[i]) ? 'function' : (/class/.test(rows[i]) ? 'class' : 'default');
-        if (statementType === 'function' || statementType === 'class') {
-            exportedBlocks.push(extractBlockName(rows[i], statementType));
+        if (statementType === 'function') {
+            functions.push(extractBlockName(rows[i], statementType));
             const [newBlock, _i] = extractBlock(rows, i, 0);
             i = _i;
-            const parsedCode = statementType === 'class' ? parseClass(newBlock) : parseBlock(newBlock, currentDirectory);
+            const parsedCode = parseBlock(newBlock, currentDirectory);
+            parsedBlocks.push(...parsedCode);
+        } else if (statementType === 'class') {
+            classes.push(extractBlockName(rows[i], statementType));
+            const [newBlock, _i] = extractBlock(rows, i, 0);
+            i = _i;
+            const parsedCode = parseClass(newBlock);
             parsedBlocks.push(...parsedCode);
         } else {
             globalCode.push(rows[i]);
             i++;
         }
     }
-    const code = [...parseBlock(globalCode, currentDirectory), ...parsedBlocks];
+    const parsedCode = parseBlock(globalCode, currentDirectory);
+
+    const code = [...parseClassInstantiation(parsedCode, classes), ...parseClassInstantiation(parsedBlocks, classes)];
 
     return `(function() {
         ${toCodeString(code)}
-        return ${exportFunction(exportedBlocks)}
+        return ${exportFunction([...functions, ...classes])}
     })()`;
 };
 
