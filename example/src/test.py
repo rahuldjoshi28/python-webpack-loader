@@ -1,3 +1,5 @@
+import test2
+
 someNum = 2
 def getFullName(a, b):
     j = 3

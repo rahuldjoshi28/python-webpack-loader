@@ -34,9 +34,9 @@ const parseStatement = (currentDirectory, variables) => row => {
         const moduleName = row.split(' ')[1];
 
         const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${moduleName}.py`)).toString();
-        const [globalCode, functions] = parse(moduleSource, currentDirectory);
+        const parsedModule = parse(moduleSource, currentDirectory);
 
-        return `${globalCode} \n const ${moduleName} = ${functions}`;
+        return `const ${moduleName} = ${parsedModule}`;
     }
     if (/def/.test(row)) {
         return result.replace(/def/, 'const')
@@ -125,7 +125,10 @@ const parse = (jsSource, currentDirectory) => {
     }
     const code = [...parseBlock(globalCode, currentDirectory), ...parsedBlocks];
 
-    return [toCodeString(code), exportFunction(exportedBlocks)];
+    return `(function() {
+        ${toCodeString(code)}
+        return ${exportFunction(exportedBlocks)}
+    })()`;
 };
 
 module.exports = parse;

@@ -6,12 +6,11 @@ const getInbuiltFunctions = () => `${Object.keys(inbuiltFunctions).map(fn => `co
 module.exports = function pythonLoader(source) {
     const directoryPath = this.context;
     let sourceCopy = source.toString();
-    const [globalCode, exports] = parse(sourceCopy, directoryPath);
+    const parsedSource = parse(sourceCopy, directoryPath);
 
     return `module.exports = (function() {
         ${getInbuiltFunctions()}
-        ${globalCode}
-        return ${exports}
+        return ${parsedSource}
     })()
     `;
 };
