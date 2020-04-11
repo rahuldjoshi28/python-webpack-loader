@@ -28,7 +28,7 @@ const parseStatement = (currentDirectory, variables) => row => {
             //TODO: Wont work if right side of expression contain some python specific operation eg 2 * [3, 2]
             variables[variable] = assignmentExpression;
         }
-        return `${isNew ? 'var' : ''} ${variable} = ${assignmentExpression}`
+        return `${isNew ? 'let' : ''} ${variable} = ${assignmentExpression}`
     }
     if (/import/.test(row)) {
         const moduleName = row.split(' ')[1];
