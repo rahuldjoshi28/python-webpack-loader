@@ -24,7 +24,7 @@ module.exports = {
             {
                 test: /\.py$/,
                 use: [
-                    {loader: 'python-webpack-loader'}
+                    {loader: path.resolve(__dirname, '../loader.js')}
                 ]
             }
         ]
