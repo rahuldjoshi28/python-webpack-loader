@@ -1,5 +1,9 @@
 import test2
 
+class A:
+    def name(self):
+        print(self)
+
 someNum = 2
 def getFullName(a, b):
     j = 3

@@ -59,29 +59,30 @@ const isNewBlock = statement => {
 
 const toCodeString = codeArray => codeArray.join("\n").toString();
 
-const  parseBlock = (block, currentDirectory) => {
+const parseBlock = (block, currentDirectory) => {
     const variables = [];
     const createRow = parseStatement(currentDirectory, variables);
     const code = [];
 
     let i = 0;
 
-    while(i < block.length) {
+    while (i < block.length) {
         const row = block[i];
         const numberOfIndents = getIndentCount(row, INDENT_LENGTH);
         if (isNewBlock(row)) {
             code.push(createRow(row) + "\n");
             const newBlocks = [];
             i++;
-            if (i === block.length) {break;}
+            if (i === block.length) {
+                break;
+            }
             while (i !== block.length && getIndentCount(block[i], INDENT_LENGTH) !== numberOfIndents) {
                 newBlocks.push(block[i]);
                 i++;
             }
             code.push(...parseBlock(newBlocks, currentDirectory));
             code.push('\n}\n');
-        }
-        else {
+        } else {
             code.push(createRow(row));
             i++;
         }
@@ -89,7 +90,51 @@ const  parseBlock = (block, currentDirectory) => {
     return code;
 };
 
-const extractFunctionName = statement => statement.substring(4, statement.indexOf('(')).trim();
+const extractBlockName = (statement, type) => {
+    if (type === 'function') {
+        return statement.substring(4, statement.indexOf('(')).trim()
+    }
+    return statement.substring(6, statement.indexOf(':')).trim();
+};
+
+const convertToClassMethod = fn => {
+    let firstLine = fn[0];
+    const args = firstLine.substring(firstLine.indexOf('(') + 1, firstLine.indexOf(')'));
+    const [ref, ...rest] = args.split(',');
+    fn[0] = firstLine.replace(args, rest.join(', ')).replace('const', '');
+    return fn.map(line => line.replace(new RegExp(ref, 'g'), 'this'));
+};
+
+const parseClass = code => {
+    const blocks = [];
+    const [className, ...restCode] = code;
+
+    blocks.push(className.replace(':', ' {\n'));
+
+    let i = 0;
+
+    while (i < restCode.length) {
+        if (/def/.test(restCode[i])) {
+            const [block, _i] = extractBlock(restCode, i, 1);
+            i += _i;
+
+            const parsedBlock = parseBlock(block);
+            blocks.push(...convertToClassMethod(parsedBlock));
+            blocks.push('\n}\n');
+        }
+    }
+    return blocks;
+};
+
+function extractBlock(rows, i, baseIndent) {
+    const newBlock = [rows[i]];
+    i++;
+    while (i < rows.length && getIndentCount(rows[i], INDENT_LENGTH) !== baseIndent) {
+        newBlock.push(rows[i]);
+        i++;
+    }
+    return [newBlock, i];
+}
 
 const parse = (jsSource, currentDirectory) => {
     let source = jsSource.toString();
@@ -108,17 +153,14 @@ const parse = (jsSource, currentDirectory) => {
 
     let i = 0;
     while (i < rows.length) {
-        if (/def/.test(rows[i])) {
-            exportedBlocks.push(extractFunctionName(rows[i]));
-            const newBlock = [rows[i]];
-            i++;
-            while (getIndentCount(rows[i], INDENT_LENGTH) !== 0) {
-                newBlock.push(rows[i]);
-                i++;
-            }
-            parsedBlocks.push(...parseBlock(newBlock, currentDirectory));
-        }
-        else {
+        const statementType = /def/.test(rows[i]) ? 'function' : (/class/.test(rows[i]) ? 'class' : 'default');
+        if (statementType === 'function' || statementType === 'class') {
+            exportedBlocks.push(extractBlockName(rows[i], statementType));
+            const [newBlock, _i] = extractBlock(rows, i, 0);
+            i = _i;
+            const parsedCode = statementType === 'class' ? parseClass(newBlock) : parseBlock(newBlock, currentDirectory);
+            parsedBlocks.push(...parsedCode);
+        } else {
             globalCode.push(rows[i]);
             i++;
         }

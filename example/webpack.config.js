@@ -17,9 +17,9 @@ module.exports = {
                 use: [{loader: 'url-loader', options: {limit: 10000}}],
             },
             {
-                test: /\.(js|jsx)$/,
+                test: /\.(js|jsx|py)$/,
                 loader: 'babel-loader',
-                exclude: /node_modules/
+                exclude: /node_modules/,
             },
             {
                 test: /\.py$/,
