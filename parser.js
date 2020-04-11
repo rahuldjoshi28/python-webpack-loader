@@ -102,7 +102,7 @@ const convertToClassMethod = fn => {
     const args = firstLine.substring(firstLine.indexOf('(') + 1, firstLine.indexOf(')'));
     const [ref, ...rest] = args.split(',');
     fn[0] = firstLine.replace(args, rest.join(', ')).replace('const', '');
-    return fn.map(line => line.replace(new RegExp(ref, 'g'), 'this'));
+    return fn.map(line => ref !== '' ? line.replace(new RegExp(ref, 'g'), 'this') : line);
 };
 
 const parseClass = code => {
@@ -112,17 +112,15 @@ const parseClass = code => {
     blocks.push(className.replace(':', ' {\n'));
 
     let i = 0;
-
     while (i < restCode.length) {
         if (/def/.test(restCode[i])) {
             const [block, _i] = extractBlock(restCode, i, 1);
-            i += _i;
-
+            i = _i;
             const parsedBlock = parseBlock(block);
             blocks.push(...convertToClassMethod(parsedBlock));
-            blocks.push('\n}\n');
         }
     }
+    blocks.push('\n}\n');
     return blocks;
 };
 

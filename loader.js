@@ -8,9 +8,11 @@ module.exports = function pythonLoader(source) {
     let sourceCopy = source.toString();
     const parsedSource = parse(sourceCopy, directoryPath);
 
-    return `module.exports = (function() {
+    let result = `module.exports = (function() {
         ${getInbuiltFunctions()}
         return ${parsedSource}
     })()
     `;
+    console.log(result);
+    return result;
 };

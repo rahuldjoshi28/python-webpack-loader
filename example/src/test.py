@@ -1,9 +1,11 @@
+import test2
+
 class Reception:
+    def getFullName(self, firstName, lastName):
+        return firstName + " " + lastName
     def greet(self, firstName, lastName):
-        fullName = firstName + " " + lastName
-        return "Hello " + fullName
+        return "Hello " + self.getFullName(firstName, lastName)
 
 
 def greet(firstName, lastName):
-    rec = Reception()
-    return rec.greet(firstName, lastName)
+    return "Hello python world " + Reception().greet(firstName, lastName)
