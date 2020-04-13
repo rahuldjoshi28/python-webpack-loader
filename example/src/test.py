@@ -6,6 +6,5 @@ class Reception:
     def greet(self, firstName, lastName):
         return "Hello " + self.getFullName(firstName, lastName)
 
-
 def greet(firstName, lastName):
     return "Hello python world " + Reception().greet(firstName, lastName)

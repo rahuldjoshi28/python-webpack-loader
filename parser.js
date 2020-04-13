@@ -22,8 +22,9 @@ const parseStatement = (currentDirectory, variables) => row => {
     if (!row) return "";
     const result = row.replace(':', ' {');
     if (/=/.test(row) && !/==/.test(row)) {
-        const [variable, assignmentExpression] = row.split('=').map(v => v.trim());
+        let [variable, assignmentExpression] = row.split('=').map(v => v.trim());
         const isNew = !variables[variable];
+        assignmentExpression = parseBlock(assignmentExpression);
         if (isNew) {
             //TODO: Wont work if right side of expression contain some python specific operation eg 2 * [3, 2]
             variables[variable] = assignmentExpression;
@@ -138,6 +139,7 @@ const parseClassInstantiation = (code, classes) => {
     return code.map(line => {
         let parsedLine = line;
         classes.forEach(className => {
+            // TODO: Doesnot work for exported classes as it uses moduleName.ClassName() to instantiate.
             parsedLine = parsedLine.replace(`${className}(`, `new ${className}(`);
         });
         return parsedLine;
