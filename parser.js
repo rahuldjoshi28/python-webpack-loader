@@ -24,7 +24,6 @@ const parseStatement = (currentDirectory, variables) => row => {
     if (/=/.test(row) && !/==/.test(row)) {
         let [variable, assignmentExpression] = row.split('=').map(v => v.trim());
         const isNew = !variables[variable];
-        assignmentExpression = parseBlock(assignmentExpression);
         if (isNew) {
             //TODO: Wont work if right side of expression contain some python specific operation eg 2 * [3, 2]
             variables[variable] = assignmentExpression;
@@ -35,9 +34,8 @@ const parseStatement = (currentDirectory, variables) => row => {
         const moduleName = row.split(' ')[1];
 
         const moduleSource = fs.readFileSync(path.join(currentDirectory, `/${moduleName}.py`)).toString();
-        const parsedModule = parse(moduleSource, currentDirectory);
-
-        return `const ${moduleName} = ${parsedModule}`;
+        const {codeText, classes} = parse(moduleSource, currentDirectory);
+        return [`const ${moduleName} = ${codeText}`, classes.map(clsNm => `${moduleName}.${clsNm}`)];
     }
     if (/def/.test(row)) {
         return result.replace(/def/, 'const')
@@ -60,6 +58,7 @@ const isNewBlock = statement => {
 
 const toCodeString = codeArray => codeArray.join("\n").toString();
 
+const globalClasses = [];
 const parseBlock = (block, currentDirectory) => {
     const variables = [];
     const createRow = parseStatement(currentDirectory, variables);
@@ -84,8 +83,16 @@ const parseBlock = (block, currentDirectory) => {
             code.push(...parseBlock(newBlocks, currentDirectory));
             code.push('\n}\n');
         } else {
-            code.push(createRow(row));
-            i++;
+            if (/import/.test(row)) {
+                const [codeText, moduleClassList] = createRow(row);
+                code.push(codeText);
+                globalClasses.push(...moduleClassList);
+                i += code.length
+            }
+            else {
+                code.push(createRow(row));
+                i++;
+            }
         }
     }
     return code;
@@ -184,12 +191,22 @@ const parse = (jsSource, currentDirectory) => {
     }
     const parsedCode = parseBlock(globalCode, currentDirectory);
 
-    const code = [...parseClassInstantiation(parsedCode, classes), ...parseClassInstantiation(parsedBlocks, classes)];
+    const classList = [...classes, ...globalClasses];
+    const code = [
+        ...parseClassInstantiation(parsedCode, classList),
+        ...parseClassInstantiation(parsedBlocks, classList)
+    ];
 
-    return `(function() {
+    const codeText = `(function() {
         ${toCodeString(code)}
         return ${exportFunction([...functions, ...classes])}
     })()`;
+
+    return {
+        codeText,
+        classes,
+        functions
+    };
 };
 
 module.exports = parse;

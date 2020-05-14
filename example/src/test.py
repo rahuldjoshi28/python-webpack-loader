@@ -7,4 +7,5 @@ class Reception:
         return "Hello " + self.getFullName(firstName, lastName)
 
 def greet(firstName, lastName):
+    p = test2.A()
     return "Hello python world " + Reception().greet(firstName, lastName)
