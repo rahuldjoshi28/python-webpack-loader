@@ -136,19 +136,14 @@ const parse = (jsSource, currentDirectory) => {
 
   let i = 0
   while (i < rows.length) {
-    const statementType = matchers.function(rows[i])
-      ? 'function'
-      : matchers.class(rows[i])
-      ? 'class'
-      : 'default'
-    if (statementType === 'function') {
-      functions.push(extractBlockName(rows[i], statementType))
+    if (matchers.function(rows[i])) {
+      functions.push(extractBlockName(rows[i], 'function'))
       const [newBlock, _i] = extractBlock(rows, i, 0)
       i = _i
       const parsedCode = parseBlock(newBlock, currentDirectory)
       parsedBlocks.push(...parsedCode)
-    } else if (statementType === 'class') {
-      classes.push(extractBlockName(rows[i], statementType))
+    } else if (matchers.class(rows[i])) {
+      classes.push(extractBlockName(rows[i], 'class'))
       const [newBlock, _i] = extractBlock(rows, i, 0)
       i = _i
       const parsedCode = parseClass(newBlock)
