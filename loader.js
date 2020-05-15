@@ -1,19 +1,8 @@
-const parse = require('./parser')
-const inbuiltFunctions = require('./inbuiltFunctions')
-
-const getInbuiltFunctions = () =>
-  `${Object.keys(inbuiltFunctions)
-    .map((fn) => `const ${fn} = ${inbuiltFunctions[fn]}`)
-    .join('\n')}`
+const transpile = require('./src/transpile')
 
 module.exports = function pythonLoader(source) {
   const directoryPath = this.context
-  let sourceCopy = source.toString()
-  const { codeText } = parse(sourceCopy, directoryPath)
+  const sourceCopy = source.toString()
 
-  return `module.exports = (function() {
-        ${getInbuiltFunctions()}
-        return ${codeText}
-    })()
-    `
+  return transpile(sourceCopy, directoryPath)
 }
