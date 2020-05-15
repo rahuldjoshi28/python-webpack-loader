@@ -9,6 +9,7 @@ const {
 const { isNewBlock } = require('./block')
 const { nativeFunctionMappings } = require('./mappings')
 const { matchers, to } = require('./statements')
+const templates = require('./templates')
 
 const INDENT_LENGTH = 4
 
@@ -161,10 +162,10 @@ const parse = (jsSource, currentDirectory) => {
     ...parseClassInstantiation(parsedBlocks, classList),
   ]
 
-  const codeText = `(function() {
-        ${toCodeString(code)}
-        return ${exportFunction([...functions, ...classes])}
-    })()`
+  const codeText = templates.module(
+    toCodeString(code),
+    exportFunction([...functions, ...classes])
+  )
 
   return {
     codeText,

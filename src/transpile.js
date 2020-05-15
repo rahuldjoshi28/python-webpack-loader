@@ -1,4 +1,5 @@
 const inbuiltFunctions = require('./inbuiltFunctions')
+const templates = require('./templates')
 const parse = require('./parser')
 
 const getInbuiltFunctions = () =>
@@ -8,12 +9,8 @@ const getInbuiltFunctions = () =>
 
 function transpile(sourceCopy, directoryPath) {
   const { codeText } = parse(sourceCopy, directoryPath)
-
-  return `module.exports = (function() {
-        ${getInbuiltFunctions()}
-        return ${codeText}
-    })()
-    `
+  const moduleToExport = templates.module(getInbuiltFunctions(), codeText)
+  return `module.exports = ${moduleToExport}`
 }
 
 module.exports = transpile
