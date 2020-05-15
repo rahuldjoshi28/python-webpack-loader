@@ -1,3 +1,6 @@
+const fs = require('fs')
+const path = require('path')
+
 const toCodeString = (codeArray) => codeArray.join('\n').toString()
 
 const exportFunction = (functions) =>
@@ -16,9 +19,13 @@ const getIndentCount = (line, indentLength) => {
   return count / indentLength
 }
 
+const fileContent = (moduleName, currentDirectory) =>
+  fs.readFileSync(path.join(currentDirectory, `/${moduleName}.py`)).toString()
+
 module.exports = {
   toCodeString,
   exportFunction,
   extractBlockName,
   getIndentCount,
+  fileContent,
 }

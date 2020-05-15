@@ -1,36 +1,31 @@
-const fs = require('fs')
-const path = require('path')
 const { convertToClassMethod, parseClassInstantiation } = require('./class')
 const {
   getIndentCount,
   extractBlockName,
   exportFunction,
   toCodeString,
+  fileContent,
 } = require('./helpers')
 const { isNewBlock } = require('./block')
 const { nativeFunctionMappings } = require('./mappings')
-const { matchers } = require('./statements')
+const { matchers, to } = require('./statements')
 
 const INDENT_LENGTH = 4
 
 const parseStatement = (currentDirectory, variables) => (row) => {
   if (!row) return ''
   const result = row.replace(':', ' {')
+
   if (matchers.assignment(row)) {
-    let [variable, assignmentExpression] = row.split('=').map((v) => v.trim())
-    const isNew = !variables[variable]
-    if (isNew) {
-      //TODO: Wont work if right side of expression contain some python specific operation eg 2 * [3, 2]
-      variables[variable] = assignmentExpression
+    const [statement, newVariable] = to.assignment(row, variables)
+    if (newVariable.name) {
+      variables[newVariable.name] = newVariable.value
     }
-    return `${isNew ? 'let' : ''} ${variable} = ${assignmentExpression}`
+    return statement
   }
   if (matchers.import(row)) {
     const moduleName = row.split(' ')[1]
-
-    const moduleSource = fs
-      .readFileSync(path.join(currentDirectory, `/${moduleName}.py`))
-      .toString()
+    const moduleSource = fileContent(moduleName, currentDirectory)
     const { codeText, classes } = parse(moduleSource, currentDirectory)
     return [
       `const ${moduleName} = ${codeText}`,
@@ -38,16 +33,13 @@ const parseStatement = (currentDirectory, variables) => (row) => {
     ]
   }
   if (matchers.function(row)) {
-    return result
-      .replace(/def/, 'const')
-      .replace(')', ') =>')
-      .replace('(', ' = (')
+    return to.function(result)
   }
   if (matchers.if(row)) {
-    return result.replace(/if/, 'if(').replace('{', ') {')
+    return to.if(result)
   }
   if (matchers.for(row)) {
-    return result.replace('for', 'for( let ').replace('{', '){')
+    return to.for(result)
   }
   return result
 }
