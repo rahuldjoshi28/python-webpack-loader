@@ -1,23 +1,16 @@
 const fs = require('fs')
 const path = require('path')
+const { convertToClassMethod, parseClassInstantiation } = require('./class')
+const {
+  getIndentCount,
+  extractBlockName,
+  exportFunction,
+  toCodeString,
+} = require('./helpers')
+const { isNewBlock } = require('./block')
+const { nativeFunctionMappings } = require('./mappings')
 
 const INDENT_LENGTH = 4
-
-const nativeFunctionMappings = [
-  {
-    expression: /print/g,
-    value: 'console.log',
-  },
-]
-
-const getIndentCount = (line, indentLength) => {
-  let count = 0
-  while (line[count] === ' ') count++
-  return count / indentLength
-}
-
-const exportFunction = (functions) =>
-  `{ ${functions.map((fn) => fn).join(',')} }`
 
 const parseStatement = (currentDirectory, variables) => (row) => {
   if (!row) return ''
@@ -57,13 +50,6 @@ const parseStatement = (currentDirectory, variables) => (row) => {
   }
   return result
 }
-
-const isNewBlock = (statement) => {
-  const blockStarts = [/def/, /if/, /else/, /for/, /while/]
-  return blockStarts.some((expression) => expression.test(statement))
-}
-
-const toCodeString = (codeArray) => codeArray.join('\n').toString()
 
 const globalClasses = []
 const parseBlock = (block, currentDirectory) => {
@@ -107,26 +93,6 @@ const parseBlock = (block, currentDirectory) => {
   return code
 }
 
-const extractBlockName = (statement, type) => {
-  if (type === 'function') {
-    return statement.substring(4, statement.indexOf('(')).trim()
-  }
-  return statement.substring(6, statement.indexOf(':')).trim()
-}
-
-const convertToClassMethod = (fn) => {
-  let firstLine = fn[0]
-  const args = firstLine.substring(
-    firstLine.indexOf('(') + 1,
-    firstLine.indexOf(')')
-  )
-  const [ref, ...rest] = args.split(',')
-  fn[0] = firstLine.replace(args, rest.join(', ')).replace('const', '')
-  return fn.map((line) =>
-    ref !== '' ? line.replace(new RegExp(ref, 'g'), 'this') : line
-  )
-}
-
 const parseClass = (code) => {
   const blocks = []
   const [className, ...restCode] = code
@@ -157,17 +123,6 @@ function extractBlock(rows, i, baseIndent) {
     i++
   }
   return [newBlock, i]
-}
-
-const parseClassInstantiation = (code, classes) => {
-  return code.map((line) => {
-    let parsedLine = line
-    classes.forEach((className) => {
-      // TODO: Doesnot work for exported classes as it uses moduleName.ClassName() to instantiate.
-      parsedLine = parsedLine.replace(`${className}(`, `new ${className}(`)
-    })
-    return parsedLine
-  })
 }
 
 const parse = (jsSource, currentDirectory) => {
