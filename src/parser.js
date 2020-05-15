@@ -9,13 +9,14 @@ const {
 } = require('./helpers')
 const { isNewBlock } = require('./block')
 const { nativeFunctionMappings } = require('./mappings')
+const { matchers } = require('./statements')
 
 const INDENT_LENGTH = 4
 
 const parseStatement = (currentDirectory, variables) => (row) => {
   if (!row) return ''
   const result = row.replace(':', ' {')
-  if (/=/.test(row) && !/==/.test(row)) {
+  if (matchers.assignment(row)) {
     let [variable, assignmentExpression] = row.split('=').map((v) => v.trim())
     const isNew = !variables[variable]
     if (isNew) {
@@ -24,7 +25,7 @@ const parseStatement = (currentDirectory, variables) => (row) => {
     }
     return `${isNew ? 'let' : ''} ${variable} = ${assignmentExpression}`
   }
-  if (/import/.test(row)) {
+  if (matchers.import(row)) {
     const moduleName = row.split(' ')[1]
 
     const moduleSource = fs
@@ -36,16 +37,16 @@ const parseStatement = (currentDirectory, variables) => (row) => {
       classes.map((clsNm) => `${moduleName}.${clsNm}`),
     ]
   }
-  if (/def/.test(row)) {
+  if (matchers.function(row)) {
     return result
       .replace(/def/, 'const')
       .replace(')', ') =>')
       .replace('(', ' = (')
   }
-  if (/if/.test(row)) {
+  if (matchers.if(row)) {
     return result.replace(/if/, 'if(').replace('{', ') {')
   }
-  if (/for/.test(row)) {
+  if (matchers.for(row)) {
     return result.replace('for', 'for( let ').replace('{', '){')
   }
   return result
@@ -79,7 +80,7 @@ const parseBlock = (block, currentDirectory) => {
       code.push(...parseBlock(newBlocks, currentDirectory))
       code.push('\n}\n')
     } else {
-      if (/import/.test(row)) {
+      if (matchers.import(row)) {
         const [codeText, moduleClassList] = createRow(row)
         code.push(codeText)
         globalClasses.push(...moduleClassList)
@@ -101,7 +102,7 @@ const parseClass = (code) => {
 
   let i = 0
   while (i < restCode.length) {
-    if (/def/.test(restCode[i])) {
+    if (matchers.function(restCode[i])) {
       const [block, _i] = extractBlock(restCode, i, 1)
       i = _i
       const parsedBlock = parseBlock(block)
@@ -143,9 +144,9 @@ const parse = (jsSource, currentDirectory) => {
 
   let i = 0
   while (i < rows.length) {
-    const statementType = /def/.test(rows[i])
+    const statementType = matchers.function(rows[i])
       ? 'function'
-      : /class/.test(rows[i])
+      : matchers.class(rows[i])
       ? 'class'
       : 'default'
     if (statementType === 'function') {
