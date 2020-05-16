@@ -6,12 +6,10 @@ const {
   toCodeString,
   fileContent,
 } = require('./helpers')
-const { isNewBlock } = require('./block')
-const { nativeFunctionMappings } = require('./mappings')
+const { isNewBlock, extractBlock } = require('./block')
+const { replaceNativeFunctions } = require('./mappings')
 const { matchers, to } = require('./statements')
 const templates = require('./templates')
-
-const INDENT_LENGTH = 4
 
 const parseStatement = (currentDirectory, variables) => (row) => {
   if (!row) return ''
@@ -45,48 +43,6 @@ const parseStatement = (currentDirectory, variables) => (row) => {
   return result
 }
 
-const globalClasses = []
-const parseBlock = (block, currentDirectory) => {
-  const variables = []
-  const createRow = parseStatement(currentDirectory, variables)
-  const code = []
-
-  let i = 0
-
-  while (i < block.length) {
-    const row = block[i]
-    const numberOfIndents = getIndentCount(row, INDENT_LENGTH)
-    if (isNewBlock(row)) {
-      code.push(createRow(row) + '\n')
-      const newBlocks = []
-      i++
-      if (i === block.length) {
-        break
-      }
-      while (
-        i !== block.length &&
-        getIndentCount(block[i], INDENT_LENGTH) !== numberOfIndents
-      ) {
-        newBlocks.push(block[i])
-        i++
-      }
-      code.push(...parseBlock(newBlocks, currentDirectory))
-      code.push('\n}\n')
-    } else {
-      if (matchers.import(row)) {
-        const [codeText, moduleClassList] = createRow(row)
-        code.push(codeText)
-        globalClasses.push(...moduleClassList)
-        i += code.length
-      } else {
-        code.push(createRow(row))
-        i++
-      }
-    }
-  }
-  return code
-}
-
 const parseClass = (code) => {
   const blocks = []
   const [className, ...restCode] = code
@@ -106,29 +62,42 @@ const parseClass = (code) => {
   return blocks
 }
 
-function extractBlock(rows, i, baseIndent) {
-  const newBlock = [rows[i]]
-  i++
-  while (
-    i < rows.length &&
-    getIndentCount(rows[i], INDENT_LENGTH) !== baseIndent
-  ) {
-    newBlock.push(rows[i])
-    i++
+const globalClasses = []
+const parseBlock = (block, currentDirectory) => {
+  const variables = []
+  const createRow = parseStatement(currentDirectory, variables)
+  const code = []
+
+  let i = 0
+  while (i < block.length) {
+    const row = block[i]
+    const numberOfIndents = getIndentCount(row)
+    if (isNewBlock(row)) {
+      code.push(createRow(row) + '\n')
+
+      const [[_, ...newBlock], _i] = extractBlock(block, i, numberOfIndents)
+      i = _i
+
+      code.push(...parseBlock(newBlock, currentDirectory))
+      code.push('\n}\n')
+    } else if (matchers.import(row)) {
+      const [codeText, moduleClassList] = createRow(row)
+
+      code.push(codeText)
+      globalClasses.push(...moduleClassList)
+      i += code.length
+    } else {
+      code.push(createRow(row))
+      i++
+    }
   }
-  return [newBlock, i]
+  return code
 }
 
 const parse = (jsSource, currentDirectory) => {
   let source = jsSource.toString()
 
-  const rows = source.split('\n').map((row) => {
-    let result = row
-    nativeFunctionMappings.forEach((rule) => {
-      result = result.replace(rule.expression, rule.value)
-    })
-    return result
-  })
+  const rows = replaceNativeFunctions(source.split('\n'))
 
   const functions = []
   const classes = []
@@ -137,41 +106,39 @@ const parse = (jsSource, currentDirectory) => {
 
   let i = 0
   while (i < rows.length) {
-    if (matchers.function(rows[i])) {
-      functions.push(extractBlockName(rows[i], 'function'))
+    const currentRow = rows[i]
+    if (matchers.function(currentRow)) {
+      functions.push(extractBlockName(currentRow, 'function'))
       const [newBlock, _i] = extractBlock(rows, i, 0)
       i = _i
       const parsedCode = parseBlock(newBlock, currentDirectory)
       parsedBlocks.push(...parsedCode)
-    } else if (matchers.class(rows[i])) {
-      classes.push(extractBlockName(rows[i], 'class'))
+    } else if (matchers.class(currentRow)) {
+      classes.push(extractBlockName(currentRow, 'class'))
       const [newBlock, _i] = extractBlock(rows, i, 0)
       i = _i
       const parsedCode = parseClass(newBlock)
       parsedBlocks.push(...parsedCode)
     } else {
-      globalCode.push(rows[i])
+      globalCode.push(currentRow)
       i++
     }
   }
-  const parsedCode = parseBlock(globalCode, currentDirectory)
 
-  const classList = [...classes, ...globalClasses]
-  const code = [
-    ...parseClassInstantiation(parsedCode, classList),
-    ...parseClassInstantiation(parsedBlocks, classList),
+  const parsedCode = [
+    ...parseBlock(globalCode, currentDirectory),
+    ...parsedBlocks,
   ]
+  const classList = [...classes, ...globalClasses]
+
+  const code = parseClassInstantiation(parsedCode, classList)
 
   const codeText = templates.module(
     toCodeString(code),
     exportFunction([...functions, ...classes])
   )
 
-  return {
-    codeText,
-    classes,
-    functions,
-  }
+  return { codeText, classes }
 }
 
-module.exports = parse
+module.exports = { parse, parseBlock }

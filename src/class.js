@@ -1,3 +1,7 @@
+const { parseBlock } = require('./parser')
+const { extractBlock } = require('./block')
+const { matchers } = require('./statements')
+
 const convertToClassMethod = (fn) => {
   let firstLine = fn[0]
   const args = firstLine.substring(

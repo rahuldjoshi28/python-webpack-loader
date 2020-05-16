@@ -5,6 +5,16 @@ const nativeFunctionMappings = [
   },
 ]
 
+function replaceNativeFunctions(code) {
+  return code.map((row) => {
+    let result = row
+    nativeFunctionMappings.forEach((rule) => {
+      result = result.replace(rule.expression, rule.value)
+    })
+    return result
+  })
+}
+
 module.exports = {
-  nativeFunctionMappings,
+  replaceNativeFunctions,
 }

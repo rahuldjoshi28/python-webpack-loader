@@ -1,6 +1,6 @@
 const inbuiltFunctions = require('./inbuiltFunctions')
 const templates = require('./templates')
-const parse = require('./parser')
+const { parse } = require('./parser')
 
 const getInbuiltFunctions = () =>
   `${Object.keys(inbuiltFunctions)

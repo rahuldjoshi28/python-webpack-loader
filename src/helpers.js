@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 
+const INDENT_LENGTH = 4
+
 const toCodeString = (codeArray) => codeArray.join('\n').toString()
 
 const exportFunction = (functions) =>
@@ -13,10 +15,10 @@ const extractBlockName = (statement, type) => {
   return statement.substring(6, statement.indexOf(':')).trim()
 }
 
-const getIndentCount = (line, indentLength) => {
+const getIndentCount = (line) => {
   let count = 0
   while (line[count] === ' ') count++
-  return count / indentLength
+  return count / INDENT_LENGTH
 }
 
 const fileContent = (moduleName, currentDirectory) =>

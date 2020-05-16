@@ -1,3 +1,6 @@
+const { fileContent } = require('./helpers')
+const parse = require('./parser')
+
 const matchers = {
   assignment: (row) => /=/.test(row) && !/==/.test(row),
   import: (row) => /import/.test(row),
