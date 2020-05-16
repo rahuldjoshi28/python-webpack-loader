@@ -1,10 +1,10 @@
 const functionExport = (globalCode, functionsToExport) => {
-  return `(function() {
+	return `(function() {
         ${globalCode}
         return ${functionsToExport}
     })()`
 }
 
 module.exports = {
-  module: functionExport,
+	module: functionExport,
 }

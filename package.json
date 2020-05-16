@@ -1,29 +1,31 @@
 {
-  "name": "python-webpack-loader",
-  "version": "1.0.1",
-  "author": "Rahul Joshi",
-  "description": "Webpack loader which converts python files into js so that you can use python files in js project ",
-  "main": "loader.js",
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "lint-fix": "prettier-eslint --write 'src/**/*.{js,jsx}'"
-  },
-  "keywords": [
-    "webpack",
-    "python",
-    "loader",
-    "python-loader"
-  ],
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rahuldjoshi28/python-webpack-loader"
-  },
-  "devDependencies": {
-    "prettier": "^2.0.5",
-    "prettier-eslint": "^9.0.1",
-    "prettier-eslint-cli": "^5.0.0"
-  }
+	"name": "python-webpack-loader",
+	"version": "1.0.1",
+	"author": "Rahul Joshi",
+	"description": "Webpack loader which converts python files into js so that you can use python files in js project ",
+	"main": "loader.js",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"lint-fix": "prettier-eslint --write 'src/**/*.{js,jsx}'",
+		"test": "jest"
+	},
+	"keywords": [
+		"webpack",
+		"python",
+		"loader",
+		"python-loader"
+	],
+	"license": "ISC",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rahuldjoshi28/python-webpack-loader"
+	},
+	"devDependencies": {
+		"jest": "^26.0.1",
+		"prettier": "^2.0.5",
+		"prettier-eslint": "^9.0.1",
+		"prettier-eslint-cli": "^5.0.0"
+	}
 }
