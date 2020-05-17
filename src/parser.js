@@ -13,7 +13,7 @@ const templates = require('./templates')
 
 const parseStatement = (currentDirectory, variables) => (row) => {
 	if (!row) return ''
-	const result = row.replace(':', ' {')
+	const result = row
 
 	if (matchers.assignment(row)) {
 		const [statement, newVariable] = to.assignment(row, variables)

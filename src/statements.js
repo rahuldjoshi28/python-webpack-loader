@@ -1,6 +1,3 @@
-const { fileContent } = require('./helpers')
-const parse = require('./parser')
-
 const matchers = {
 	assignment: (row) => /=/.test(row) && !/==/.test(row),
 	import: (row) => /import/.test(row),
@@ -16,12 +13,13 @@ const to = {
 			.replace(/def/, 'const')
 			.replace(')', ') =>')
 			.replace('(', ' = (')
+			.replace(':', ' {')
 	},
 	if: (statement) => {
-		return statement.replace(/if/, 'if(').replace('{', ') {')
+		return statement.replace(/if/, 'if(').replace(':', ') {')
 	},
 	for: (statement) => {
-		return statement.replace('for', 'for( let ').replace('{', '){')
+		return statement.replace('for', 'for( let ').replace(':', ') {')
 	},
 	assignment: (row, variables) => {
 		const [variable, assignmentExpression] = row.split('=').map((v) => v.trim())
