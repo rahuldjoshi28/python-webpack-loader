@@ -18,6 +18,11 @@ const extractBlockName = (statement, type) => {
 const getIndentCount = (line) => {
 	let count = 0
 	while (line[count] === ' ') count++
+
+	if (count % INDENT_LENGTH !== 0) {
+		throw new Error('Indentation is wrong')
+	}
+
 	return count / INDENT_LENGTH
 }
 
