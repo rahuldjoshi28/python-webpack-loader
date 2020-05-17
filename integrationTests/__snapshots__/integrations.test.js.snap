@@ -1,0 +1,157 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`integrations should work for class python code 1`] = `
+"module.exports = (function() {
+        const range = (start, end, step = 1) => {
+  if (end === undefined) {
+    return range(0, start);
+  }
+
+  let arr = [];
+
+  for (let i = start; i < end; i += step) {
+    arr.push(i);
+  }
+
+  return arr;
+}
+        return (function() {
+        
+let maths = new Maths()
+console.log(maths.increment(2))
+class Maths {
+
+     add = ( a,  b) => {
+
+        return a + b
+
+}
+
+     increment = ( i) => {
+
+        return this.add(i, 1)
+
+}
+
+
+}
+
+        return { Maths }
+    })()
+    })()"
+`;
+
+exports[`integrations should work for functions python code 1`] = `
+"module.exports = (function() {
+        const range = (start, end, step = 1) => {
+  if (end === undefined) {
+    return range(0, start);
+  }
+
+  let arr = [];
+
+  for (let i = start; i < end; i += step) {
+    arr.push(i);
+  }
+
+  return arr;
+}
+        return (function() {
+        
+
+greet()
+console.log(add(2, 3))
+const greet = () => {
+
+    console.log(\\"Hello world\\")
+
+}
+
+const add = (a, b) => {
+
+    return a + b
+
+}
+
+        return { greet,add }
+    })()
+    })()"
+`;
+
+exports[`integrations should work for modules python code 1`] = `
+"module.exports = (function() {
+        const range = (start, end, step = 1) => {
+  if (end === undefined) {
+    return range(0, start);
+  }
+
+  let arr = [];
+
+  for (let i = start; i < end; i += step) {
+    arr.push(i);
+  }
+
+  return arr;
+}
+        return (function() {
+        const interactions = (function() {
+        
+const greet = () => {
+
+    console.log(\\"Hello world\\")
+
+}
+
+        return { greet }
+    })()
+const calculations = (function() {
+        
+class Maths {
+
+     add = ( a,  b) => {
+
+        return a + b
+
+}
+
+     increment = ( i) => {
+
+        return this.add(i, 1)
+
+}
+
+
+}
+
+        return { Maths }
+    })()
+interactions.greet()
+let maths = new calculations.Maths()
+console.log(maths.increment(2))
+        return {  }
+    })()
+    })()"
+`;
+
+exports[`integrations should work for simple python code 1`] = `
+"module.exports = (function() {
+        const range = (start, end, step = 1) => {
+  if (end === undefined) {
+    return range(0, start);
+  }
+
+  let arr = [];
+
+  for (let i = start; i < end; i += step) {
+    arr.push(i);
+  }
+
+  return arr;
+}
+        return (function() {
+        let a = 2
+console.log(a)
+        return {  }
+    })()
+    })()"
+`;
