@@ -27,6 +27,11 @@ describe('block', () => {
 			expect(isNewBlock(statement)).toEqual(true)
 		})
 
+		it('should return true for provided "class" statement', () => {
+			const statement = 'class Cat:'
+			expect(isNewBlock(statement)).toEqual(true)
+		})
+
 		it('should return false for provided "assignment" statement', () => {
 			const statement = 'a = 2'
 			expect(isNewBlock(statement)).toEqual(false)

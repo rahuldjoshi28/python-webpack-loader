@@ -1,7 +1,7 @@
 const { getIndentCount } = require('./helpers')
 
 const isNewBlock = (statement) => {
-	const blockStarts = [/def/, /if/, /else/, /for/, /while/]
+	const blockStarts = [/def/, /if/, /else/, /for/, /while/, /class/]
 	return blockStarts.some((expression) => expression.test(statement))
 }
 
